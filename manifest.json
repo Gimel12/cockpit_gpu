@@ -1,0 +1,10 @@
+{
+    "version": 0,
+
+    "tools": {
+        "jupyter": {
+            "label": "GPU Monitor",
+            "path": "index.html"
+        }
+    }
+}

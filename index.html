@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>GPU Monitor</title>
+        <meta charset="utf-8">
+        <link href="../base1/cockpit.css" type="text/css" rel="stylesheet">
+        <script src="../base1/cockpit.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="css/uikit.min.css" />
+        <link rel="stylesheet" href="assets/css/custom.css" />
+        <script src="js/uikit.min.js"></script>
+        <script src="js/uikit-icons.min.js"></script>        
+        <script src="js/jquery.js"></script>
+
+        <!-- <script src="assets/js/active_container.js"></script> -->
+    </head>
+    <body>
+
+        <div class="uk-section">
+            <div class="uk-container">
+                    <a class="custom-buttom uk-background-secondary uk-align-left" id="update" target="_blank">Update Tab</a>
+            </div>
+            
+
+            <div class="uk-container uk-margin-top" id="main-gpu"></div>
+            
+
+        </div>
+        
+        <!-- UPDATE INTERFACE -->
+     <div id="modal-update" uk-modal>
+        <div class="uk-modal-dialog">
+            <button class="uk-modal-close-default" type="button" uk-close></button>
+            <div class="uk-modal-header">
+                <h2 class="uk-modal-title">Updating Cockpit Tab</h2>
+            </div>
+            <div class="uk-modal-body">
+                <p id="update-text"></p>
+            </div>
+            <div class="uk-modal-footer uk-text-right">
+                <div class="uk-align-left" id="updating-spinner">                    
+                    <div uk-spinner></div>
+                    <label style="margin-left: 20px;">Installing the update...</label>
+                </div>
+                <button class="uk-button uk-button-default uk-modal-close" id="cancel-update-tab-btn" type="button">Cancel</button>
+                <button class="uk-button uk-button-default uk-background-primary" type="button" id="update-tab-btn">Update</button>
+            </div>
+        </div>
+    </div>      
+
+    <div id="modal-update-webui" uk-modal>
+        <div class="uk-modal-dialog">
+            <button class="uk-modal-close-default" type="button" uk-close></button>
+            <div class="uk-modal-header">
+                <h2 class="uk-modal-title">Updating Cockpit Web User Interface</h2>
+            </div>
+            <div class="uk-modal-body">
+                <p id="update-webui-text"></p>
+            </div>
+            <div class="uk-modal-footer uk-text-right">
+                <div class="uk-align-left" id="updating-webui-spinner">                    
+                    <div uk-spinner></div>
+                    <label style="margin-left: 20px;">Installing the update...</label>
+                </div>
+                <button class="uk-button uk-button-default uk-modal-close" id="cancel-update-webui-btn" type="button">Cancel</button>
+                <button class="uk-button uk-button-default uk-background-primary" type="button" id="update-webui-btn">Update</button>
+            </div>
+        </div>
+    </div> 
+    </body>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/upd_platform.js"></script>
+</html>
