@@ -11,8 +11,8 @@
         <script src="js/uikit.min.js"></script>
         <script src="js/uikit-icons.min.js"></script>        
         <script src="js/jquery.js"></script>
-
-        <!-- <script src="assets/js/active_container.js"></script> -->
+        <script src="assets/js/custom.js"></script>
+        <script src="assets/js/upd_platform.js"></script>
     </head>
     <body>
 
@@ -24,7 +24,40 @@
 
             <div class="uk-container uk-margin-top" id="main-gpu"></div>
             
-
+            <div id="gpu-modal" uk-modal>
+                <div class="uk-modal-dialog">
+                    <button class="uk-modal-close-default" type="button" uk-close></button>
+                    <div class="uk-modal-header">
+                        <h2 class="uk-modal-title" id="gpu-settings-title">GPU Settings</h2>
+                    </div>
+                    <div class="uk-modal-body">
+                        <form>
+                            <fieldset class="uk-fieldset">
+                                                   
+                                <legend class="uk-legend">Power Limit </legend>
+                        
+                                <div class="uk-margin">
+                                    <input class="uk-input" type="text" id="power-limit" placeholder="Enter the power limit for the GPU">
+                                </div>
+                                                                                                                   
+                            </fieldset>
+                            <fieldset class="uk-fieldset">
+                                                   
+                                <legend class="uk-legend">GPU Clock </legend>
+                                <div class="uk-margin">
+                                    <input class="uk-input" type="text" id="gpu-clock" placeholder="Enter the GPU clock">
+                                </div>
+                                                                                                                   
+                            </fieldset>
+                        </form>
+                        <p id="header-commit-text"></p> 
+                    </div>
+                    <div class="uk-modal-footer uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
+                        <button class="uk-button uk-button-primary" type="button" id="apply-settings">Apply</button>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- UPDATE INTERFACE -->
@@ -68,6 +101,5 @@
         </div>
     </div> 
     </body>
-    <script src="assets/js/custom.js"></script>
-    <script src="assets/js/upd_platform.js"></script>
+    
 </html>

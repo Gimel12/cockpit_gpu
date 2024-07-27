@@ -1,25 +1,32 @@
 import argparse
 import os
 import json
+mode = "dev"
 
-def set_pl(gpu, power_limit):
+def set_pl(gpu, power_limit,mode):
     # Replace with correct command
-    r = os.popen(f"sudo nvidia-smi -i {gpu} -pl {power_limit}").read()
+
+    cmd = f"sudo nvidia-smi -i {gpu} -pl {power_limit}"
+    r = cmd
+    if mode != "dev":
+        r = os.popen(cmd).read()
     return r
 
 
 if __name__ == "__main__":
     cmdline = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    cmdline.add_argument('--op', default="")
-    cmdline.add_argument('--value', default="")
-    cmdline.add_argument('--gpu', default="")
+    cmdline.add_argument('--power', default="")
+    cmdline.add_argument('--gpu_clock', default="")
+    cmdline.add_argument('--gpu_id', default="")
     flags, unk_args = cmdline.parse_known_args()
     result = {
         "success": False,
+        "flags": [flags.power,flags.gpu_id]
     }
-    if flags.op == "" or flags.value == "" or flags.gpu == "":
+    if flags.gpu_id == "":
         print(json.dumps(result))
-        exit(1)
+        exit(0)
     
-    if op == "power":
-        r = set_pl(int(flags.gpu),int(flags.value))
+    if flags.power != "":
+        r = set_pl(int(flags.gpu_id),int(flags.power),"dev")
+        print(r)
