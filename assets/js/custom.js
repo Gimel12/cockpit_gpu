@@ -1,9 +1,9 @@
 
 
 // FIXME : move to json
-var py_exec = "/home/tony/anaconda3/bin/python3"
-var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
-_working_mode = "dev" //modes:  dev, production
+var py_exec = "/home/bizon/anaconda3/bin/python3"
+var _core_path = "/usr/local/share/dlbt_os/"
+_working_mode = "dev" //modes:  dev, production [FIXED]
 _tab_name = "gpu";
 // Here you read the vars from the json
 
@@ -32,21 +32,13 @@ function process_gpus(data){
 }
 
 function load_gpus(){
-    if(_working_mode == "production"){          
-        cockpit.spawn([py_path + "dist/read_images"])
-            .stream(process_images)
-            .then(ping_success)
-            .catch(console.log('Failed mode production of load_Containers')); 
-    }       
-    else{
-        options = {
-            "superuser":"try"
-        } 
-        cockpit.spawn([py_exec,py_path + "gpu_backend.py"], options)
-        .stream(process_gpus)
-        .then(ping_success)
-        .catch(ping_fail); 
-    }
+    options = {
+        "superuser":"try"
+    } 
+    cockpit.spawn([py_exec,py_path + "gpu_backend.py"], options)
+    .stream(process_gpus)
+    .then(ping_success)
+    .catch(ping_fail); 
 }
 
 
@@ -65,7 +57,7 @@ function start_gpu_settings(event){
 
 function real_gpu_settings(){
     // FIXME: _gpu_id must be set before
-    var clock = document.getElementById("gpu-clock").value;
+    // var clock = document.getElementById("gpu-clock").value;
     var power = document.getElementById("power-limit").value;
 
     var gpu_fields = ["gpu_id","power"];
@@ -78,7 +70,7 @@ function real_gpu_settings(){
         gpu_settings.push(`--${op}=${val}`);
     })
     options = {
-        "superuser":"try"
+        "superuser":"require"
     } 
     args = [py_exec,py_path + "hw_interface.py"].concat(gpu_settings);
     console.log(args);
@@ -87,12 +79,50 @@ function real_gpu_settings(){
     cockpit.spawn(args, options)
     .stream(stream_apply_settings)
     .then(ping_success)
-    .catch(ping_fail); 
+    .catch(apply_fail); 
 }
 
 function stream_apply_settings(data){
     console.log(data)
+    f = JSON.parse(data)
+    if(f["success"])
+        apply_success(f["result"])
+    else
+        apply_fail(f["result"])
 }
+
+function apply_fail(msg=undefined){
+    var text = "There was an error applying the settings.";
+    if(msg != undefined){
+        text = msg;
+    }
+        
+    var mod = document.getElementById("gpu-modal");
+    UIkit.modal(mod).hide();        
+    UIkit.notification({
+        message: text,
+        status: 'danger',
+        pos: 'top-center',
+        timeout: 2000
+    });
+}
+
+function apply_success(msg){
+    if(!_update_finished)
+        return;
+    var mod = document.getElementById("gpu-modal");
+    UIkit.modal(mod).hide();    
+    document.getElementById("updating-spinner").style.visibility = "hidden";
+    UIkit.notification({
+        message: 'The settings were applied successfully:\n' + msg,
+        status: 'success',
+        pos: 'top-center',
+        timeout: 2000
+    });
+}
+
+
+
 function show_gpus(gpus){   
     var elem = document.getElementById("main-gpu");
     s = "";

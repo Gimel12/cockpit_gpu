@@ -14,7 +14,7 @@ def get_gpu_info():
 
             gpus.append({
                 'id': i,
-                'name': nvmlDeviceGetName(handle),
+                'name': str(nvmlDeviceGetName(handle))[2:-1],
                 'temperature': nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU),
                 'gpu_utilization': nvmlDeviceGetUtilizationRates(handle).gpu,
                 'memory_utilization': nvmlDeviceGetUtilizationRates(handle).memory,
@@ -30,7 +30,7 @@ def get_gpu_info():
 
 
 if __name__ == "__main__":
-    l = get_gpu_info()
+    l = list(get_gpu_info())
     d = json.dumps(l)
     print(d)
     exit(0)
