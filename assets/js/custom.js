@@ -32,9 +32,7 @@ function process_gpus(data){
 }
 
 function load_gpus(){
-    options = {
-        "superuser":"try"
-    } 
+    options = {} 
     cockpit.spawn([py_exec,py_path + "gpu_backend.py"], options)
     .stream(process_gpus)
     .then(ping_success)
@@ -84,17 +82,19 @@ function real_gpu_settings(){
 
 function stream_apply_settings(data){
     console.log(data)
+
     f = JSON.parse(data)
     if(f["success"])
-        apply_success(f["result"])
+        apply_success(f["output"])
     else
-        apply_fail(f["result"])
+        apply_fail(f["output"])
 }
 
 function apply_fail(msg=undefined){
+    console.log("Inside !! FAIL");
     var text = "There was an error applying the settings.";
     if(msg != undefined){
-        text = msg;
+        text = msg + "Check that you have admin access.";
     }
         
     var mod = document.getElementById("gpu-modal");
@@ -108,11 +108,9 @@ function apply_fail(msg=undefined){
 }
 
 function apply_success(msg){
-    if(!_update_finished)
-        return;
+    console.log("Inside !! SUCCESS");
     var mod = document.getElementById("gpu-modal");
     UIkit.modal(mod).hide();    
-    document.getElementById("updating-spinner").style.visibility = "hidden";
     UIkit.notification({
         message: 'The settings were applied successfully:\n' + msg,
         status: 'success',

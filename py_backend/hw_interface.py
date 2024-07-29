@@ -1,13 +1,13 @@
 import argparse
 import os
 import json
-mode = "dev"
+mode = "prod"
 
 def set_pl(gpu, power_limit,mode):
     # Replace with correct command
 
     cmd = f"sudo nvidia-smi -i {gpu} -pl {power_limit}"
-    # f"echo {s} | sudo -S bash script.sh"
+    # cmd = f"echo root | sudo -S nvidia-smi -i {gpu} -pl {power_limit}"
     r = cmd
     if mode != "dev":
         r = os.popen(cmd).read()
@@ -28,9 +28,10 @@ if __name__ == "__main__":
         exit(0)
     
     if flags.power != "":
-        r = set_pl(int(flags.gpu_id),int(flags.power),"dev")
+        r = set_pl(int(flags.gpu_id),int(flags.power),mode)
         result["output"] = r
         if r.lower().find("error") == -1:
             result["output"] = r
+            result["success"] = True
         
         print(json.dumps(result))
