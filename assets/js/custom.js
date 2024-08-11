@@ -1,11 +1,17 @@
 
 
 // FIXME : move to json
-var py_exec = "/home/bizon/anaconda3/bin/python3"
-var _core_path = "/usr/local/share/dlbt_os/"
+// var py_exec = "/home/bizon/anaconda3/bin/python3"
+// var _core_path = "/usr/local/share/dlbt_os/"
+// _working_mode = "dev" //modes:  dev, production [FIXED]
+// _tab_name = "gpu";
+// Here you read the vars from the json
+
+//local version -dev tony
+var py_exec = "/home/tony/anaconda3/bin/python3"
+var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
 _working_mode = "dev" //modes:  dev, production [FIXED]
 _tab_name = "gpu";
-// Here you read the vars from the json
 
 var py_path = _core_path + "cockpit_"+ _tab_name  +"/py_backend/"
 
@@ -14,7 +20,6 @@ var _docker_images = [];
 var _jupyter_images = [];
 var _img_parse_count = 0;
 var _img_parse_incomplete = "";
-
 
 function ping_success() {
     // console.log("Success");
@@ -162,7 +167,17 @@ function init_load_gpus(){
     let loading = setInterval(() => {
         // console.log("Loading GPU info...");
         load_gpus();
+        start_plots();
     }, 1000)
+}
+
+function start_plots(){
+    
+    TESTER = document.getElementById('tester');
+	Plotly.newPlot( TESTER, [{
+	x: [1, 2, 3, 4, 5],
+	y: [1, 2, 4, 8, 16] }], {
+	margin: { t: 0 } } );
 }
 
 let stateCheck = setInterval(() => {

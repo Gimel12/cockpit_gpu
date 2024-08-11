@@ -11,8 +11,11 @@
         <script src="js/uikit.min.js"></script>
         <script src="js/uikit-icons.min.js"></script>        
         <script src="js/jquery.js"></script>
+        <script src="js/plotly.js" charset="utf-8"></script>
         <script src="assets/js/custom.js"></script>
         <script src="assets/js/upd_platform.js"></script>
+        
+</script>
     </head>
     <body>
 
@@ -20,10 +23,12 @@
             <div class="uk-container">
                     <a class="custom-buttom uk-background-secondary uk-align-left" id="update" target="_blank">Update Tab</a>
             </div>
-            
 
             <div class="uk-container uk-margin-top" id="main-gpu"></div>
-            
+            <div id="tester" style="width:600px;height:250px;"></div>
+            <!-- <canvas id="myChart" width="400" height="200"></canvas> -->
+
+
             <div id="gpu-modal" uk-modal>
                 <div class="uk-modal-dialog">
                     <button class="uk-modal-close-default" type="button" uk-close></button>
@@ -47,7 +52,7 @@
                                 <div class="uk-margin">
                                     <input class="uk-input" type="text" id="gpu-clock" placeholder="Enter the GPU clock">
                                 </div>
-                                                                                                                   
+                                                                                
                             </fieldset> -->
                         </form>
                         <p id="header-commit-text"></p> 
