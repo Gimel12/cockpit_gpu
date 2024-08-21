@@ -3,6 +3,12 @@ import json
 import argparse
 import gpu_backend
 
+def fix_name(s):
+    if len(s) > 2 and s[2] == "'":
+        return s[2:-1]
+    return s
+
+
 def get_gpu_info():
     try:
         nvmlInit()
@@ -14,10 +20,11 @@ def get_gpu_info():
 
             gpus.append({
                 'id': i,
-                'name': str(nvmlDeviceGetName(handle))[2:-1],
+                'name': fix_name(str(nvmlDeviceGetName(handle))),
                 'temperature': nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU),
                 'gpu_utilization': nvmlDeviceGetUtilizationRates(handle).gpu,
                 'memory_utilization': nvmlDeviceGetUtilizationRates(handle).memory,
+                'power_usage': nvmlDeviceGetPowerUsage(handle) // 1000,
                 'memory_total': info.total // 1024 // 1024,
                 'memory_used': info.used // 1024 // 1024,
                 'memory_free': info.free // 1024 // 1024

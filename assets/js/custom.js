@@ -15,12 +15,11 @@ _tab_name = "gpu";
 
 var py_path = _core_path + "cockpit_"+ _tab_name  +"/py_backend/"
 
-var _using_port = ""
-var _docker_images = [];
-var _jupyter_images = [];
-var _img_parse_count = 0;
-var _img_parse_incomplete = "";
-
+// Tab Specific
+let _gpu_fields = ["temperature","gpu_utilization","memory_utilization","power_usage"];
+var _active_field = "temperature";
+var _plotting_data = {};
+var _chart = undefined;
 function ping_success() {
     // console.log("Success");
 }
@@ -167,18 +166,146 @@ function init_load_gpus(){
     let loading = setInterval(() => {
         // console.log("Loading GPU info...");
         load_gpus();
-        start_plots();
+        update_log();
     }, 1000)
 }
 
-function start_plots(){
-    
-    TESTER = document.getElementById('tester');
-	Plotly.newPlot( TESTER, [{
-	x: [1, 2, 3, 4, 5],
-	y: [1, 2, 4, 8, 16] }], {
-	margin: { t: 0 } } );
+
+
+// Plotting module
+function init_gpu_fields(){
+    const $field_select = $("#gpu-field-select");
+    $.each(_gpu_fields, (idx,field) => {
+        $field_select.append(
+            $('<option></option>')
+                .attr('value', field)
+                .text(field)
+        );
+    });
 }
+
+
+function update_log(){
+    args = [py_exec,py_path + "read_history.py"];
+    cockpit.spawn(args)
+    .stream(stream_update_log)
+    .then(ping_success)
+    .catch(ping_fail); 
+}
+
+_buffer = ""
+function stream_update_log(data){
+
+    let st_idx = data.indexOf("*ST*");
+    let en_idx = data.indexOf("*EN*");
+    let samples = undefined;
+    // console.log(_buffer);
+    if(st_idx >=0 && en_idx >= 0){
+        // console.log("Entered in beg|end");
+        samples = JSON.parse(data); 
+    }
+    else if(st_idx >=0){
+        // console.log("Entered in beg");
+        _buffer = data.slice(st_idx + 4);
+        return;
+    }
+    else if(en_idx >=0){
+        // console.log("Entered in end");
+        _buffer += data.slice(0,en_idx);
+        samples = JSON.parse(_buffer);
+    }
+    else {
+        // console.log("Entered in mid");
+        _buffer += data;
+        return;
+    }
+    // let samples = JSON.parse(data);
+    // Update each field's data
+    try {
+        samples = JSON.parse(data);
+    }
+    catch(error){
+        // console.log("Fatal: ", error);
+    }
+
+    // console.log("Samples received: ", samples);
+    _gpu_fields.forEach(f => {
+        _plotting_data[f] = draw(samples,f);
+    });
+    plot_active_field();
+}
+
+function update_selection_field(){
+    field = $("#gpu-field-select").val();
+    _active_field = field;
+    plot_active_field();
+}
+
+function plot_active_field(){
+    const ctx = document.getElementById('myChart');
+    if (_chart){
+        _chart.destroy();
+    }
+    _chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+        labels: _plotting_data[_active_field]["labels"],
+        datasets: _plotting_data[_active_field]["datasets"],
+        },
+        options: {
+        scales: {
+            x: {
+                ticks: {
+                    callback: function(value, index, values) {
+                        // Show label only every n samples
+                        var n = 2; // Change this value to control the frequency
+                        if (index % n === 0) {
+                            return this.getLabelForValue(value);
+                        } else {
+                            return '';
+                        }
+                    }
+                }
+                },
+            y: {
+            beginAtZero: true
+            }
+        },
+        
+        animation: {
+            duration: 0 // Disable animation to avoid the line shifting during update
+        }
+        }
+    });
+}
+
+function draw(samples, field){
+    let labels = [];
+    let datasets = [];
+    let n_gpus = samples[0]["data"].length
+    for(var i=0;i<n_gpus;i+=1){
+        datasets.push({
+            label: "GPU " + String(samples[0]["data"][0]["id"]),
+            data: [],
+            pointRadius: 1,
+            borderWidth: 1
+        })
+    }
+    samples.forEach((x,idx)=>{
+        // console.log(idx);
+        labels[idx] = x["timestamp"].slice(11,16);
+        // console.log("Inside x[data]", x["data"][String(0)]["temperature"]);
+        for(var i=0;i<n_gpus;i+=1){
+            datasets[i]["data"].push(x["data"][i][field]);
+        }
+    })
+    data = {
+        labels: labels,
+        datasets: datasets 
+    }
+    return data
+}
+
 
 let stateCheck = setInterval(() => {
     if (document.readyState === 'complete') {
@@ -195,6 +322,11 @@ let stateCheck = setInterval(() => {
             }
         })
         // Checking access to the document object
+        init_gpu_fields();
+        const fieldSelect = document.getElementById('gpu-field-select');
+        fieldSelect.addEventListener('change', update_selection_field);
         init_load_gpus();
+        // start_plots();
+        
     }
 }, 500);
