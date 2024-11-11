@@ -1,24 +1,27 @@
 
 
 // FIXME : move to json
-// var py_exec = "/home/bizon/anaconda3/bin/python3"
-// var _core_path = "/usr/local/share/dlbt_os/"
-// _working_mode = "dev" //modes:  dev, production [FIXED]
-// _tab_name = "gpu";
+var py_exec = "/home/bizon/anaconda3/bin/python3"
+var _core_path = "/usr/local/share/dlbt_os/"
+_working_mode = "dev" //modes:  dev, production [FIXED]
+_tab_name = "gpu";
 // Here you read the vars from the json
 
 //local version -dev tony
-var py_exec = "/home/tony/anaconda3/bin/python3"
-var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
-_working_mode = "dev" //modes:  dev, production [FIXED]
-_tab_name = "gpu";
+// var py_exec = "/home/tony/anaconda3/bin/python3"
+// var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
+// _working_mode = "dev" //modes:  dev, production [FIXED]
+// _tab_name = "gpu";
 
 var py_path = _core_path + "cockpit_"+ _tab_name  +"/py_backend/"
 
 // Tab Specific
 let _gpu_fields = ["temperature","gpu_utilization","memory_utilization","power_usage"];
 var _active_field = "temperature";
+var _initial_load_done = false;
 var _plotting_data = {};
+const _sampling_size = 550;
+var _samples = [];
 var _chart = undefined;
 function ping_success() {
     // console.log("Success");
@@ -166,7 +169,10 @@ function init_load_gpus(){
     let loading = setInterval(() => {
         // console.log("Loading GPU info...");
         load_gpus();
-        update_log();
+        if(_initial_load_done){
+            get_logs();
+        }
+        
     }, 1000)
 }
 
@@ -185,52 +191,48 @@ function init_gpu_fields(){
 }
 
 
-function update_log(){
-    args = [py_exec,py_path + "read_history.py"];
-    cockpit.spawn(args)
-    .stream(stream_update_log)
-    .then(ping_success)
-    .catch(ping_fail); 
+
+function get_logs(initialize=false){
+    var last_sample = "NIL";
+    var stream_call = update_stream;
+    if(initialize){
+        stream_call = initial_fill_stream;
+    }
+    if (_samples.length > 0){
+        last_sample = _samples[_samples.length-1]["timestamp"];
+    }
+    args = [py_exec,py_path + "read_history.py","--last_log=\""+ last_sample +"\""];
+        cockpit.spawn(args)
+        .stream(stream_call)
+        .then(ping_success)
+        .catch(ping_fail); 
 }
 
-_buffer = ""
-function stream_update_log(data){
+function update_stream(data){
+    nsamples = JSON.parse(data);
+    _samples = _samples.concat(nsamples);
+    st_idx = _samples.length - _sampling_size;
+    _samples = _samples.slice(st_idx)
+    plot();
+}
 
-    let st_idx = data.indexOf("*ST*");
-    let en_idx = data.indexOf("*EN*");
-    let samples = undefined;
-    // console.log(_buffer);
-    if(st_idx >=0 && en_idx >= 0){
-        // console.log("Entered in beg|end");
-        samples = JSON.parse(data); 
-    }
-    else if(st_idx >=0){
-        // console.log("Entered in beg");
-        _buffer = data.slice(st_idx + 4);
-        return;
-    }
-    else if(en_idx >=0){
-        // console.log("Entered in end");
-        _buffer += data.slice(0,en_idx);
-        samples = JSON.parse(_buffer);
+function initial_fill_stream(data){
+    nsamples = JSON.parse(data);
+    _samples = _samples.concat(nsamples);
+    // console.log("The size of the  samples is: ", _samples.length)
+    if (_samples.length < _sampling_size){
+        get_logs(true);
     }
     else {
-        // console.log("Entered in mid");
-        _buffer += data;
-        return;
+        _initial_load_done = true;
+        console.log("All the samples loaded.");
+        plot();
     }
-    // let samples = JSON.parse(data);
-    // Update each field's data
-    try {
-        samples = JSON.parse(data);
-    }
-    catch(error){
-        // console.log("Fatal: ", error);
-    }
+}
 
-    // console.log("Samples received: ", samples);
+function plot(){
     _gpu_fields.forEach(f => {
-        _plotting_data[f] = draw(samples,f);
+        _plotting_data[f] = draw(_samples,f);
     });
     plot_active_field();
 }
@@ -306,7 +308,45 @@ function draw(samples, field){
     return data
 }
 
+function createBarChart(canvasElement) {
+    // Check if the canvas element is valid
+    if (!canvasElement || !(canvasElement instanceof HTMLCanvasElement)) {
+        console.error("Please provide a valid HTML canvas element.");
+        return;
+    }
 
+    // Chart.js setup
+    const ctx = canvasElement.getContext('2d');
+
+    // Define the data for the chart
+    const data = {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+        datasets: [{
+            label: 'Monthly Sales',
+            data: [65, 59, 80, 81, 56, 55],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    // Define chart options
+    const options = {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    };
+
+    // Create the chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: options
+    });
+}
 let stateCheck = setInterval(() => {
     if (document.readyState === 'complete') {
         console.log("Starting GPU Monitor tab...");       
@@ -322,10 +362,13 @@ let stateCheck = setInterval(() => {
             }
         })
         // Checking access to the document object
+        get_logs(true);
         init_gpu_fields();
         const fieldSelect = document.getElementById('gpu-field-select');
         fieldSelect.addEventListener('change', update_selection_field);
         init_load_gpus();
+        // const canvasElement = document.getElementById('myChart');
+        // createBarChart(canvasElement);
         // start_plots();
         
     }
