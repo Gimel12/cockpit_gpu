@@ -143,8 +143,8 @@ function show_gpus(gpus){
                     <progress class="uk-progress" value="${gpu.gpu_utilization}" max="100"></progress>
                 </div>
                 <div class="uk-margin">
-                    <span class="uk-text-bold">Memory Utilization: ${gpu.memory_utilization}%</span>
-                    <progress class="uk-progress" value="${gpu.memory_utilization}" max="100"></progress>
+                    <span class="uk-text-bold">Memory Utilization: ${gpu.memory_pct}%</span>
+                    <progress class="uk-progress" value="${gpu.memory_pct}" max="100"></progress>
                 </div>
                 <div class="uk-margin">
                     <span class="uk-text-bold">Memory Used: ${gpu.memory_used} / ${gpu.memory_total} MB</span>
@@ -169,11 +169,15 @@ function init_load_gpus(){
     let loading = setInterval(() => {
         // console.log("Loading GPU info...");
         load_gpus();
+        
+    }, 1000);
+
+    let updating_plots = setInterval(() => {
         if(_initial_load_done){
             get_logs();
         }
-        
-    }, 1000)
+    },1000*60*5);
+
 }
 
 
@@ -201,15 +205,18 @@ function get_logs(initialize=false){
     if (_samples.length > 0){
         last_sample = _samples[_samples.length-1]["timestamp"];
     }
-    args = [py_exec,py_path + "read_history.py","--last_log=\""+ last_sample +"\""];
-        cockpit.spawn(args)
+    console.log()
+    args = [py_exec,py_path + "read_history.py","--last_log=\""+ last_sample +"\"","--sampling_size="+_sampling_size];
+
+    cockpit.spawn(args)
         .stream(stream_call)
         .then(ping_success)
         .catch(ping_fail); 
 }
 
 function update_stream(data){
-    nsamples = JSON.parse(data);
+    resp = JSON.parse(data);
+    nsamples = resp["values"];
     _samples = _samples.concat(nsamples);
     st_idx = _samples.length - _sampling_size;
     _samples = _samples.slice(st_idx)
@@ -217,10 +224,11 @@ function update_stream(data){
 }
 
 function initial_fill_stream(data){
-    nsamples = JSON.parse(data);
+    resp = JSON.parse(data);
+    nsamples = resp["values"];
     _samples = _samples.concat(nsamples);
     // console.log("The size of the  samples is: ", _samples.length)
-    if (_samples.length < _sampling_size){
+    if ( !resp["end"] && _samples.length < _sampling_size){
         get_logs(true);
     }
     else {
