@@ -1,27 +1,30 @@
 
 
 // FIXME : move to json
-// var py_exec = "/home/bizon/anaconda3/bin/python3"
-// var _core_path = "/usr/local/share/dlbt_os/"
-// _working_mode = "dev" //modes:  dev, production [FIXED]
-// _tab_name = "gpu";
+var py_exec = "/home/bizon/anaconda3/bin/python3"
+var _core_path = "/usr/local/share/dlbt_os/"
+_working_mode = "dev" //modes:  dev, production [FIXED]
+_tab_name = "gpu";
 // Here you read the vars from the json
 
 //local version -dev tony
-var py_exec = "/home/tony/anaconda3/bin/python3"
-var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
-_working_mode = "dev" //modes:  dev, production [FIXED]
-_tab_name = "gpu";
+// var py_exec = "/home/tony/anaconda3/bin/python3"
+// var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
+// _working_mode = "dev" //modes:  dev, production [FIXED]
+// _tab_name = "gpu";
 
 var py_path = _core_path + "cockpit_"+ _tab_name  +"/py_backend/"
 
 // Tab Specific
 let _gpu_fields = ["temperature","gpu_utilization","memory_utilization","power_usage"];
 var _active_field = "temperature";
+var _initial_load_done = false;
 var _plotting_data = {};
+const _sampling_size = 550;
+var _samples = [];
 var _chart = undefined;
 function ping_success() {
-    // console.log("Success");
+    // console.log("Ping Success");
 }
 
 function ping_fail(data) {
@@ -54,7 +57,8 @@ function start_gpu_settings(event){
     $("#header-commit-text").html("You are about to apply these settings to GPU # <b>"+ _gpu_id + "</b>. Are you sure?");
     var mod = document.getElementById("gpu-modal");
     UIkit.modal(mod).show();
-
+    // UIkit.modal('#my-modal').show(); // Open modal
+    // console.log(document.documentElement.classList)
 }
 
 function real_gpu_settings(){
@@ -80,13 +84,16 @@ function real_gpu_settings(){
 
     cockpit.spawn(args, options)
     .stream(stream_apply_settings)
-    .then(ping_success)
-    .catch(apply_fail); 
+    .then(() => {
+        location.reload();
+    })
+    .catch(() => {
+        console.log("ERROR");
+        location.reload();
+    }); 
 }
 
 function stream_apply_settings(data){
-    console.log(data)
-
     f = JSON.parse(data)
     if(f["success"])
         apply_success(f["output"])
@@ -140,8 +147,8 @@ function show_gpus(gpus){
                     <progress class="uk-progress" value="${gpu.gpu_utilization}" max="100"></progress>
                 </div>
                 <div class="uk-margin">
-                    <span class="uk-text-bold">Memory Utilization: ${gpu.memory_utilization}%</span>
-                    <progress class="uk-progress" value="${gpu.memory_utilization}" max="100"></progress>
+                    <span class="uk-text-bold">Memory Utilization: ${gpu.memory_pct}%</span>
+                    <progress class="uk-progress" value="${gpu.memory_pct}" max="100"></progress>
                 </div>
                 <div class="uk-margin">
                     <span class="uk-text-bold">Memory Used: ${gpu.memory_used} / ${gpu.memory_total} MB</span>
@@ -166,8 +173,15 @@ function init_load_gpus(){
     let loading = setInterval(() => {
         // console.log("Loading GPU info...");
         load_gpus();
-        update_log();
-    }, 1000)
+        
+    }, 1000);
+
+    let updating_plots = setInterval(() => {
+        if(_initial_load_done){
+            get_logs();
+        }
+    },1000*60*5);
+
 }
 
 
@@ -185,52 +199,52 @@ function init_gpu_fields(){
 }
 
 
-function update_log(){
-    args = [py_exec,py_path + "read_history.py"];
+
+function get_logs(initialize=false){
+    var last_sample = "NIL";
+    var stream_call = update_stream;
+    if(initialize){
+        stream_call = initial_fill_stream;
+    }
+    if (_samples.length > 0){
+        last_sample = _samples[_samples.length-1]["timestamp"];
+    }
+    console.log()
+    args = [py_exec,py_path + "read_history.py","--last_log=\""+ last_sample +"\"","--sampling_size="+_sampling_size];
+
     cockpit.spawn(args)
-    .stream(stream_update_log)
-    .then(ping_success)
-    .catch(ping_fail); 
+        .stream(stream_call)
+        .then(ping_success)
+        .catch(ping_fail); 
 }
 
-_buffer = ""
-function stream_update_log(data){
+function update_stream(data){
+    resp = JSON.parse(data);
+    nsamples = resp["values"];
+    _samples = _samples.concat(nsamples);
+    st_idx = _samples.length - _sampling_size;
+    _samples = _samples.slice(st_idx)
+    plot();
+}
 
-    let st_idx = data.indexOf("*ST*");
-    let en_idx = data.indexOf("*EN*");
-    let samples = undefined;
-    // console.log(_buffer);
-    if(st_idx >=0 && en_idx >= 0){
-        // console.log("Entered in beg|end");
-        samples = JSON.parse(data); 
-    }
-    else if(st_idx >=0){
-        // console.log("Entered in beg");
-        _buffer = data.slice(st_idx + 4);
-        return;
-    }
-    else if(en_idx >=0){
-        // console.log("Entered in end");
-        _buffer += data.slice(0,en_idx);
-        samples = JSON.parse(_buffer);
+function initial_fill_stream(data){
+    resp = JSON.parse(data);
+    nsamples = resp["values"];
+    _samples = _samples.concat(nsamples);
+    // console.log("The size of the  samples is: ", _samples.length)
+    if ( !resp["end"] && _samples.length < _sampling_size){
+        get_logs(true);
     }
     else {
-        // console.log("Entered in mid");
-        _buffer += data;
-        return;
+        _initial_load_done = true;
+        console.log("All the samples loaded.");
+        plot();
     }
-    // let samples = JSON.parse(data);
-    // Update each field's data
-    try {
-        samples = JSON.parse(data);
-    }
-    catch(error){
-        // console.log("Fatal: ", error);
-    }
+}
 
-    // console.log("Samples received: ", samples);
+function plot(){
     _gpu_fields.forEach(f => {
-        _plotting_data[f] = draw(samples,f);
+        _plotting_data[f] = draw(_samples,f);
     });
     plot_active_field();
 }
@@ -322,11 +336,11 @@ let stateCheck = setInterval(() => {
             }
         })
         // Checking access to the document object
+        get_logs(true);
         init_gpu_fields();
         const fieldSelect = document.getElementById('gpu-field-select');
         fieldSelect.addEventListener('change', update_selection_field);
         init_load_gpus();
-        // start_plots();
         
     }
 }, 500);

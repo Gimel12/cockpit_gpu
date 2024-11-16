@@ -5,7 +5,7 @@ import os
 import threading
 
 def fix_name(s):
-    if len(s) > 2 and s[2] == "'":
+    if len(s) > 1 and s[1] == "'":
         return s[2:-1]
     return s
 
@@ -96,9 +96,9 @@ class RecordManager():
 
 if __name__ == "__main__":
     file_path ="/usr/local/share/dlbt_os/gen/nvidia-log.txt"
-    params = {   # in seconds
-            "total_time": 48*60, # 48h = 48*60*60
-            "sample_time": 5,    # 5min = 5*60
-    }
-    rm = RecordManager(file_path,params)
+    # params = {   # in seconds
+    #         "total_time": 48*60, # 48h = 48*60*60
+    #         "sample_time": 5,    # 5min = 5*60
+    # }
+    rm = RecordManager(file_path)
     rm.record()

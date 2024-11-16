@@ -18,3 +18,7 @@ pip install json
 ```
 /home/bizon/anaconda3/bin/python3 /usr/local/share/dlbt_os/cockpit_gpu/system_scripts/nvidia_logger.py
 ```
+3. 
+```
+npm install chart
+```

@@ -4,7 +4,9 @@ import argparse
 import gpu_backend
 
 def fix_name(s):
-    if len(s) > 2 and s[2] == "'":
+    # print("THe chararcter : ", s[2])
+    if len(s) > 1 and s[1] == "'":
+        # print("Fixing the name: ", s)
         return s[2:-1]
     return s
 
@@ -27,7 +29,8 @@ def get_gpu_info():
                 'power_usage': nvmlDeviceGetPowerUsage(handle) // 1000,
                 'memory_total': info.total // 1024 // 1024,
                 'memory_used': info.used // 1024 // 1024,
-                'memory_free': info.free // 1024 // 1024
+                'memory_free': info.free // 1024 // 1024,
+                'memory_pct': round((info.used / info.total)*100,2)
             })
         nvmlShutdown()
         return gpus
