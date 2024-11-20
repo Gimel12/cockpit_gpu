@@ -24,7 +24,7 @@ const _sampling_size = 550;
 var _samples = [];
 var _chart = undefined;
 function ping_success() {
-    // console.log("Success");
+    // console.log("Ping Success");
 }
 
 function ping_fail(data) {
@@ -57,7 +57,8 @@ function start_gpu_settings(event){
     $("#header-commit-text").html("You are about to apply these settings to GPU # <b>"+ _gpu_id + "</b>. Are you sure?");
     var mod = document.getElementById("gpu-modal");
     UIkit.modal(mod).show();
-
+    // UIkit.modal('#my-modal').show(); // Open modal
+    // console.log(document.documentElement.classList)
 }
 
 function real_gpu_settings(){
@@ -83,13 +84,16 @@ function real_gpu_settings(){
 
     cockpit.spawn(args, options)
     .stream(stream_apply_settings)
-    .then(ping_success)
-    .catch(apply_fail); 
+    .then(() => {
+        location.reload();
+    })
+    .catch(() => {
+        console.log("ERROR");
+        location.reload();
+    }); 
 }
 
 function stream_apply_settings(data){
-    console.log(data)
-
     f = JSON.parse(data)
     if(f["success"])
         apply_success(f["output"])
@@ -375,9 +379,6 @@ let stateCheck = setInterval(() => {
         const fieldSelect = document.getElementById('gpu-field-select');
         fieldSelect.addEventListener('change', update_selection_field);
         init_load_gpus();
-        // const canvasElement = document.getElementById('myChart');
-        // createBarChart(canvasElement);
-        // start_plots();
         
     }
 }, 500);
