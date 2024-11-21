@@ -170,7 +170,7 @@ function show_gpus(gpus){
                 </td>
             </tr>`;
         buttons.push("gpu_settings-" + idx);
-        s += g + g;
+        s += g;
         
     });
 
