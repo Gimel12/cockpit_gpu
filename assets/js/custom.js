@@ -1,15 +1,15 @@
 
 
 // FIXME : move to json
-var py_exec = "/home/bizon/anaconda3/bin/python3"
-var _core_path = "/usr/local/share/dlbt_os/"
+// var py_exec = "/home/bizon/anaconda3/bin/python3"
+// var _core_path = "/usr/local/share/dlbt_os/"
 _working_mode = "dev" //modes:  dev, production [FIXED]
 _tab_name = "gpu";
 // Here you read the vars from the json
 
 //local version -dev tony
-// var py_exec = "/home/tony/anaconda3/bin/python3"
-// var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
+var py_exec = "/home/tony/anaconda3/bin/python3"
+var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
 // _working_mode = "dev" //modes:  dev, production [FIXED]
 // _tab_name = "gpu";
 
@@ -85,6 +85,7 @@ function real_gpu_settings(){
     cockpit.spawn(args, options)
     .stream(stream_apply_settings)
     .then(() => {
+        console.log("Hereee")
         location.reload();
     })
     .catch(() => {
@@ -99,6 +100,7 @@ function stream_apply_settings(data){
         apply_success(f["output"])
     else
         apply_fail(f["output"])
+    location.reload()
 }
 
 function apply_fail(msg=undefined){
@@ -132,42 +134,55 @@ function apply_success(msg){
 
 
 
-function show_gpus(gpus){   
+function show_gpus(gpus){
     var elem = document.getElementById("main-gpu");
     s = "";
-    buttons = []
-    gpus.forEach((gpu,idx) => {
-        s += `<div class="uk-card uk-card-default uk-card-body">
-                <h2>${gpu.name} (GPU ${gpu.id})</h2>
-                <div class="uk-margin">
-                    <span class="uk-text-bold">Temperature: ${gpu.temperature}°C</span>
-                </div>
-                <div class="uk-margin">
-                    <span class="uk-text-bold">GPU Utilization: ${gpu.gpu_utilization}%</span>
+    buttons = [];
+    s += `<table class="uk-table uk-table-divider">
+        <thead>
+            <tr>
+                <th>GPU Name</th>
+                <th>Temperature</th>
+                <th>GPU Utilization</th>
+                <th>Memory Utilization</th>
+                <th>Memory Used</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    gpus.forEach((gpu, idx) => {
+        g = `<tr>
+                <td>${gpu.name} (GPU ${gpu.id})</td>
+                <td>${gpu.temperature}°C</td>
+                <td>
+                    ${gpu.gpu_utilization}%
                     <progress class="uk-progress" value="${gpu.gpu_utilization}" max="100"></progress>
-                </div>
-                <div class="uk-margin">
-                    <span class="uk-text-bold">Memory Utilization: ${gpu.memory_pct}%</span>
-                    <progress class="uk-progress" value="${gpu.memory_pct}" max="100"></progress>
-                </div>
-                <div class="uk-margin">
-                    <span class="uk-text-bold">Memory Used: ${gpu.memory_used} / ${gpu.memory_total} MB</span>
-                    <progress class="uk-progress" value="${(gpu.memory_used / gpu.memory_total) * 100}" max="100"></progress>
-                </div>
-                <div class="uk-margin">
+                </td>
+                <td>
+                    ${gpu.memory_pct}% <progress class="uk-progress" value="${gpu.memory_pct}" max="100"></progress>
+                </td>
+                <td>
+                    ${gpu.memory_used} / ${gpu.memory_total} MB <progress class="uk-progress" value="${(gpu.memory_used / gpu.memory_total) * 100}" max="100"></progress>
+                </td>
+                <td>
                     <a class="custom-buttom uk-button-primary uk-align-left"  id="gpu_settings-${idx}">Settings</a>
-                </div>
-            </div>`
-            buttons.push("gpu_settings-"+idx);
-    });  
+                </td>
+            </tr>`;
+        buttons.push("gpu_settings-" + idx);
+        s += g + g;
+        
+    });
+
+    s += `</tbody></table>`;
     elem.innerHTML = s;
     for(var i =0;i<buttons.length;i++){
         b = document.getElementById(buttons[i]);
         // console.log("Button: ",b);
         b.addEventListener("click",start_gpu_settings);
     }
-    
 }
+
 
 function init_load_gpus(){
     let loading = setInterval(() => {
@@ -365,6 +380,10 @@ let stateCheck = setInterval(() => {
         clearInterval(stateCheck);
         document.body.style = "overflow:auto;";
         $("#apply-settings").click(real_gpu_settings);
+        $("#cancel-apply-settings").click(() => {
+            console.log("Entering cancel..");
+            location.reload();
+        });
         $("#volume-bind-check").click(function(){
             if($("#volume-bind-check").prop("checked")){
                 $(".volume-bind").removeClass("hidden");
