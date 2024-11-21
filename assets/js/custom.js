@@ -1,15 +1,15 @@
 
 
 // FIXME : move to json
-// var py_exec = "/home/bizon/anaconda3/bin/python3"
-// var _core_path = "/usr/local/share/dlbt_os/"
+var py_exec = "/home/bizon/anaconda3/bin/python3"
+var _core_path = "/usr/local/share/dlbt_os/"
 _working_mode = "dev" //modes:  dev, production [FIXED]
 _tab_name = "gpu";
 // Here you read the vars from the json
 
 //local version -dev tony
-var py_exec = "/home/tony/anaconda3/bin/python3"
-var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
+// var py_exec = "/home/tony/anaconda3/bin/python3"
+// var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
 // _working_mode = "dev" //modes:  dev, production [FIXED]
 // _tab_name = "gpu";
 
