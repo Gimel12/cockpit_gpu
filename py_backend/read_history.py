@@ -24,6 +24,8 @@ def fix_filter(s):
 def read_next_logs(num,last_timestamp,sample_size):
     last_timestamp = fix_filter(last_timestamp)
     lines = read_lines()
+    sample_size = min(sample_size, len(lines))
+    
     idx = -1
     out = []
     response = {
@@ -37,6 +39,7 @@ def read_next_logs(num,last_timestamp,sample_size):
                 break
     # print(idx)
     # If it is too old or non-existent:
+
     if idx == -1:
         out = lines[-sample_size:-sample_size+num]
         response["end"] = False

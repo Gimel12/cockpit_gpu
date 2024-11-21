@@ -224,8 +224,8 @@ function get_logs(initialize=false){
     if (_samples.length > 0){
         last_sample = _samples[_samples.length-1]["timestamp"];
     }
-    console.log()
     args = [py_exec,py_path + "read_history.py","--last_log=\""+ last_sample +"\"","--sampling_size="+_sampling_size];
+    // console.log("Trying to get logs with ", args)
 
     cockpit.spawn(args)
         .stream(stream_call)
@@ -246,7 +246,9 @@ function initial_fill_stream(data){
     resp = JSON.parse(data);
     nsamples = resp["values"];
     _samples = _samples.concat(nsamples);
+
     // console.log("The size of the  samples is: ", _samples.length)
+    // console.log("Samples: ", _samples)
     if ( !resp["end"] && _samples.length < _sampling_size){
         get_logs(true);
     }

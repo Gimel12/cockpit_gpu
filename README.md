@@ -21,6 +21,6 @@ pip install json
 ```
 4. Install the dependencies for the javascript tab
 ```
-npm install chart
+npm install chart.js
 ```
 5. Restart the system for loading the script
