@@ -1,15 +1,15 @@
 
 
 // FIXME : move to json
-var py_exec = "/home/bizon/anaconda3/bin/python3"
-var _core_path = "/usr/local/share/dlbt_os/"
+// var py_exec = "/home/bizon/anaconda3/bin/python3"
+// var _core_path = "/usr/local/share/dlbt_os/"
 _working_mode = "dev" //modes:  dev, production [FIXED]
 _tab_name = "gpu";
 // Here you read the vars from the json
 
 //local version -dev tony
-// var py_exec = "/home/tony/anaconda3/bin/python3"
-// var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
+var py_exec = "/home/tony/anaconda3/bin/python3"
+var _core_path = "/home/tony/Documents/side_proj/ruben/cockpit/"
 // _working_mode = "dev" //modes:  dev, production [FIXED]
 // _tab_name = "gpu";
 
@@ -142,10 +142,12 @@ function show_gpus(gpus){
         <thead>
             <tr>
                 <th>GPU Name</th>
+                <th>Fan</th>
                 <th>Temperature</th>
-                <th>GPU Utilization</th>
-                <th>Memory Utilization</th>
                 <th>Memory Used</th>
+                <th>Memory Utilization</th>
+                <th>GPU Utilization</th>
+                <th>Power</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -154,17 +156,19 @@ function show_gpus(gpus){
     gpus.forEach((gpu, idx) => {
         g = `<tr>
                 <td>${gpu.name} (GPU ${gpu.id})</td>
+                <td>${gpu.fan}%</td>
                 <td>${gpu.temperature}°C</td>
                 <td>
-                    ${gpu.gpu_utilization}%
-                    <progress class="uk-progress" value="${gpu.gpu_utilization}" max="100"></progress>
+                    ${gpu.memory_used} / ${gpu.memory_total} MB <progress class="uk-progress" value="${(gpu.memory_used / gpu.memory_total) * 100}" max="100"></progress>
                 </td>
                 <td>
                     ${gpu.memory_pct}% <progress class="uk-progress" value="${gpu.memory_pct}" max="100"></progress>
                 </td>
                 <td>
-                    ${gpu.memory_used} / ${gpu.memory_total} MB <progress class="uk-progress" value="${(gpu.memory_used / gpu.memory_total) * 100}" max="100"></progress>
+                    ${gpu.gpu_utilization}%
+                    <progress class="uk-progress" value="${gpu.gpu_utilization}" max="100"></progress>
                 </td>
+                <td>${gpu.power_usage}W</td>
                 <td>
                     <a class="custom-buttom uk-button-primary uk-align-left"  id="gpu_settings-${idx}">Settings</a>
                 </td>
@@ -271,6 +275,7 @@ function update_selection_field(){
 }
 
 function plot_active_field(){
+    console.log(_plotting_data)
     const ctx = document.getElementById('myChart');
     if (_chart){
         _chart.destroy();
@@ -311,10 +316,11 @@ function plot_active_field(){
 function draw(samples, field){
     let labels = [];
     let datasets = [];
-    let n_gpus = samples[0]["data"].length
+    let n_gpus = samples[0]["data"].length;
+    // console.log("Sample to take the id from :", samples);
     for(var i=0;i<n_gpus;i+=1){
         datasets.push({
-            label: "GPU " + String(samples[0]["data"][0]["id"]),
+            label: "GPU " + String(i),
             data: [],
             pointRadius: 1,
             borderWidth: 1
@@ -335,45 +341,7 @@ function draw(samples, field){
     return data
 }
 
-function createBarChart(canvasElement) {
-    // Check if the canvas element is valid
-    if (!canvasElement || !(canvasElement instanceof HTMLCanvasElement)) {
-        console.error("Please provide a valid HTML canvas element.");
-        return;
-    }
 
-    // Chart.js setup
-    const ctx = canvasElement.getContext('2d');
-
-    // Define the data for the chart
-    const data = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-        datasets: [{
-            label: 'Monthly Sales',
-            data: [65, 59, 80, 81, 56, 55],
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-        }]
-    };
-
-    // Define chart options
-    const options = {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    };
-
-    // Create the chart
-    new Chart(ctx, {
-        type: 'bar',
-        data: data,
-        options: options
-    });
-}
 let stateCheck = setInterval(() => {
     if (document.readyState === 'complete') {
         console.log("Starting GPU Monitor tab...");       

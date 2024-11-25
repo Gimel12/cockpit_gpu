@@ -10,6 +10,12 @@ def fix_name(s):
         return s[2:-1]
     return s
 
+def get_fan(handle):
+    try:
+        fan = nvmlDeviceGetFanSpeed(handle)
+    except:
+        fan = 0
+    return fan
 
 def get_gpu_info():
     try:
@@ -19,6 +25,7 @@ def get_gpu_info():
         for i in range(deviceCount):
             handle = nvmlDeviceGetHandleByIndex(i)
             info = nvmlDeviceGetMemoryInfo(handle)
+            fan_pct = get_fan(handle)
 
             gpus.append({
                 'id': i,
@@ -28,6 +35,7 @@ def get_gpu_info():
                 'memory_utilization': nvmlDeviceGetUtilizationRates(handle).memory,
                 'power_usage': nvmlDeviceGetPowerUsage(handle) // 1000,
                 'memory_total': info.total // 1024 // 1024,
+                'fan': get_fan(handle),
                 'memory_used': info.used // 1024 // 1024,
                 'memory_free': info.free // 1024 // 1024,
                 'memory_pct': round((info.used / info.total)*100,2)
