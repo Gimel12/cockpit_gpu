@@ -17,6 +17,7 @@ pip install json
 
 3. Add the following line to `crontab -e`:
 ```
+* * * * * /home/bizon/anaconda3/bin/python3 /usr/local/share/dlbt_os/cockpit_gpu/system_scripts/nvidia_logger.py
 /home/bizon/anaconda3/bin/python3 /usr/local/share/dlbt_os/cockpit_gpu/system_scripts/nvidia_logger.py
 ```
 4. Install the dependencies for the javascript tab
